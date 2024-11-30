@@ -1,15 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useRef, useState } from 'react'
 
 import { useFetchCells } from '@/hooks/api/useCells'
+import { DndContext, DragEndEvent, useDraggable } from '@dnd-kit/core'
+import { ChartArea } from 'lucide-react'
+import { Bar, BarChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from 'recharts'
 
 import { transformCellsToRows } from '@/utils/transformCells'
 
-const TableComponent = ({ tableId }: { tableId: string }) => {
+export const TableComponent = ({ tableId }: { tableId: string }) => {
   const { data: cells, isLoading, error } = useFetchCells(tableId)
 
-  // Задаём размер таблицы
   const totalRows = 20
   const totalColumns = Array.from(
     { length: 25 },
@@ -18,93 +20,131 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
 
   const rows = transformCellsToRows(cells || [], totalRows, totalColumns)
 
-  // Состояния для выделения
-  const [selectedCell, setSelectedCell] = useState<{ row: number; column: string } | null>(null)
-  const [highlightedRow, setHighlightedRow] = useState<number | null>(null)
-  const [highlightedColumn, setHighlightedColumn] = useState<string | null>(null)
+  const [selectedCells, setSelectedCells] = useState<{ row: number; column: string }[]>([]) // Состояние выделенных ячеек
+  const [chartData, setChartData] = useState<{ name: string; value: number }[]>([]) // Данные для графика
+  const [position, setPosition] = useState({ x: 50, y: 50 }) // Позиция графика на экране
+  const [showGraph, setShowGraph] = useState(false)
+
+  const tableRef = useRef<HTMLTableElement>(null) // Ссылка на таблицу для определения её границ
+
+  const handleCellClick = (row: number, column: string) => {
+    setSelectedCells((prev) => {
+      const exists = prev.some((cell) => cell.row === row && cell.column === column)
+      return exists ? prev.filter((cell) => !(cell.row === row && cell.column === column)) : [...prev, { row, column }]
+    })
+  }
+
+  const handleChartAreaClick = () => {
+    // Генерация данных для графика на основе выделенных ячеек
+    const data = selectedCells.map(({ row, column }) => {
+      const cellValue = rows[row - 1][column]?.value || 0
+      return {
+        name: `${row}-${column}`,
+        value: parseFloat(cellValue) || 0,
+      }
+    })
+    setChartData(data)
+    setShowGraph((prevState) => !prevState)
+  }
+
+  // Перехват событий начала и окончания перетаскивания
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { delta } = event
+    const tableRect = tableRef.current?.getBoundingClientRect() // Получаем размеры таблицы
+
+    // Проверка на пустые размеры таблицы
+    if (tableRect) {
+      const newX = Math.min(Math.max(position.x + delta.x, 0), tableRect.width - 100) // Ограничиваем по оси X (вместо tableRect.width можно вычесть ширину графика)
+      const newY = Math.min(Math.max(position.y + delta.y, 0), tableRect.height - 100) // Ограничиваем по оси Y (вместо tableRect.height можно вычесть высоту графика)
+
+      setPosition({ x: newX, y: newY })
+    }
+  }
+
+  // Хук для перетаскивания графика
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: 'chart',
+    data: { type: 'chart' },
+  })
+
+  console.log(attributes, listeners, 'use')
+
+  const handleDragStart = () => {
+    console.log('Drag started')
+  }
 
   if (isLoading) return <p>Загрузка...</p>
   if (error) return <p>Ошибка: {error.message}</p>
 
-  const handleCellClick = (row: number, column: string) => {
-    setSelectedCell({ row, column })
-    setHighlightedRow(null)
-    setHighlightedColumn(null)
-  }
-
-  const handleRowClick = (row: number) => {
-    setHighlightedRow(row)
-    setSelectedCell(null)
-    setHighlightedColumn(null)
-  }
-
-  const handleColumnClick = (column: string) => {
-    setHighlightedColumn(column)
-    setSelectedCell(null)
-    setHighlightedRow(null)
-  }
-
   return (
-    <div className="relative w-full overflow-x-auto">
-      <table className="w-full border-collapse table-auto border border-gray-300">
-        {/* Заголовки таблицы */}
-        <thead>
-          <tr className="border-b border-gray-300 bg-gray-200">
-            <th className="h-12 px-4 text-left font-medium text-muted-foreground sticky left-0 bg-gray-300" />
-            {totalColumns.map((col) => (
-              <th
-                key={col}
-                onClick={() => handleColumnClick(col)}
-                className={`h-12 px-4 text-center font-medium text-muted-foreground cursor-pointer border-r border-b border-[#f0f0f0] bg-[#f0f0f0] ${
-                  highlightedColumn === col ? 'bg-[#edebfb]' : ''
-                }`}>
-                {col}
-              </th>
-            ))}
-          </tr>
-        </thead>
-
-        {/* Тело таблицы */}
-        <tbody>
-          {rows.map((row, rowIndex) => (
-            <tr
-              key={rowIndex}
-              className={`hover:bg-[#edebfb] border-b border-gray-100 ${
-                highlightedRow === row.rowNumber ? 'bg-[#edebfb]' : ''
-              }`}>
-              {/* Номер строки */}
-              <td
-                onClick={() => handleRowClick(row.rowNumber)}
-                className={`h-12 px-4 text-center sticky left-0 cursor-pointer border-b border-r border-[#f0f0f0] bg-[#f0f0f0] ${
-                  highlightedRow === row.rowNumber ? 'bg-[#edebfb]' : ''
-                }`}>
-                {row.rowNumber}
-              </td>
-              {/* Ячейки строки */}
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="relative w-full overflow-x-auto">
+        <ChartArea className="cursor-pointer" onClick={handleChartAreaClick} />
+        {showGraph && (
+          <div
+            onMouseDown={(e) => e.preventDefault()} // Чтобы предотвратить захват событий внутренним svg
+            onDragStart={handleDragStart}
+            ref={setNodeRef} // Привязка перетаскиваемого элемента
+            {...listeners} // Обработчики для перетаскивания
+            {...attributes} // Атрибуты для перетаскиваемого элемента
+            style={{
+              position: 'absolute',
+              left: `${position.x}px`,
+              top: `${position.y}px`,
+              cursor: 'move',
+              zIndex: 100,
+              backgroundColor: 'white',
+            }}>
+            <BarChart width={730} height={250} data={chartData} style={{ pointerEvents: 'none' }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="value" fill="#8884d8" />
+            </BarChart>
+          </div>
+        )}
+        <table className="w-full border-collapse table-auto border border-gray-300 relative" ref={tableRef}>
+          <thead>
+            <tr className="border-b border-gray-300 bg-gray-200">
+              <th className="h-12 px-4 text-left font-medium text-muted-foreground sticky left-0 bg-gray-300" />
               {totalColumns.map((col) => (
-                <td
+                <th
                   key={col}
-                  onClick={() => handleCellClick(row.rowNumber, col)}
-                  className={`h-12 px-4 text-left border-r border-gray-100 cursor-pointer ${
-                    selectedCell?.row === row.rowNumber && selectedCell?.column === col
-                      ? 'bg-[#edebfb]'
-                      : highlightedColumn === col
-                        ? 'bg-[#edebfb]'
-                        : ''
-                  }`}>
-                  <input
-                    type="text"
-                    defaultValue={row[col]?.value || ''}
-                    className="w-full bg-transparent focus:outline-none"
-                  />
-                </td>
+                  className="h-12 px-4 text-center font-medium text-muted-foreground border-r border-b border-[#f0f0f0] bg-[#f0f0f0]">
+                  {col}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((row, rowIndex) => (
+              <tr key={rowIndex} className="hover:bg-[#edebfb] border-b border-gray-100">
+                <td className="h-12 px-4 text-center sticky left-0 border-b border-r border-[#f0f0f0] bg-[#f0f0f0]">
+                  {row.rowNumber}
+                </td>
+                {totalColumns.map((col) => (
+                  <td
+                    key={col}
+                    onClick={() => handleCellClick(row.rowNumber, col)}
+                    className={`h-12 px-4 text-left border-r border-gray-100 cursor-pointer ${
+                      selectedCells.some((cell) => cell.row === row.rowNumber && cell.column === col)
+                        ? 'bg-[#edebfb]'
+                        : ''
+                    }`}>
+                    <input
+                      type="text"
+                      defaultValue={row[col]?.value || ''}
+                      className="w-full bg-transparent focus:outline-none"
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </DndContext>
   )
 }
-
-export default TableComponent

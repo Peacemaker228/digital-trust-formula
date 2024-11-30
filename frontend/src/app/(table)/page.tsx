@@ -1,9 +1,8 @@
 'use client'
 
-import { useFetchCells } from '@/hooks/api/useCells'
 import { useFetchTables } from '@/hooks/api/useTables'
 
-import TableComponent from '@/components/TableComponent'
+import { TableComponent } from '@/components/TableComponent'
 import { Header } from '@/components/header'
 
 export default function Home() {
@@ -12,7 +11,7 @@ export default function Home() {
 
   return (
     <div className="w-screen h-screen">
-      {/* <Header title={'Cross-channel analysis'} /> */}
+      <Header title={'Cross-channel analysis'} />
       <TableComponent tableId={'b84f62a5-557c-4189-8fec-b7647f6f7a0f'} />
     </div>
   )
