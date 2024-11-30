@@ -5,7 +5,7 @@ const swaggerDocument: OpenAPIV3.Document = {
   info: {
     title: 'Excel Backend API',
     version: '1.0.0',
-    description: 'API для работы с таблицами, ячейками и кастомными формулами',
+    description: 'API для работы с таблицами, ячейками, стилями ячеек и кастомными формулами',
   },
   servers: [
     {
@@ -171,6 +171,74 @@ const swaggerDocument: OpenAPIV3.Document = {
         responses: {
           '201': {
             description: 'Ячейка создана или обновлена',
+          },
+        },
+      },
+    },
+    '/cellStyles': {
+      get: {
+        summary: 'Получить список стилей ячеек таблицы',
+        parameters: [
+          {
+            name: 'table_id',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+            description: 'ID таблицы',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Успешно',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      tableId: { type: 'string' },
+                      row: { type: 'integer' },
+                      column: { type: 'string' },
+                      textColor: { type: 'string' },
+                      cellColor: { type: 'string' },
+                      font: { type: 'string' },
+                      borderStyle: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        summary: 'Создать или обновить стиль ячейки',
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  tableId: { type: 'string' },
+                  row: { type: 'integer' },
+                  column: { type: 'string' },
+                  textColor: { type: 'string' },
+                  cellColor: { type: 'string' },
+                  font: { type: 'string' },
+                  borderStyle: { type: 'string' },
+                },
+                required: ['tableId', 'row', 'column'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Стиль ячейки создан или обновлён',
           },
         },
       },

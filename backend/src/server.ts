@@ -6,6 +6,7 @@ import swaggerDocument from './swagger';
 import tablesRoutes from './routes/tables';
 import cellsRoutes from './routes/cells';
 import formulasRoutes from './routes/formulas';
+import cellStylesRoutes from './routes/cellStyles';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use(express.json());
 app.use('/api', tablesRoutes);
 app.use('/api', cellsRoutes);
 app.use('/api', formulasRoutes);
+app.use('/api', cellStylesRoutes);
 
 // Подключение Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));

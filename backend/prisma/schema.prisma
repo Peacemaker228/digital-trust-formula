@@ -10,11 +10,11 @@ datasource db {
 
 
 model Table {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cells     Cell[]
+  id         String       @id @default(uuid())
+  name       String
+createdAt  DateTime       @default(now())
+  cells      Cell[]
+  cellStyles CellStyle[] 
 }
 
 model Cell {
@@ -29,6 +29,21 @@ model Cell {
   table Table @relation(fields: [tableId], references: [id])
 
   @@unique([tableId, row, column]) // Составной уникальный ключ
+}
+
+model CellStyle {
+  id           String   @id @default(uuid())
+  tableId      String
+  row          Int
+  column       String
+  textColor    String?  // Цвет текста (в HEX или RGBA формате)
+  cellColor    String?  // Цвет фона ячейки (в HEX или RGBA формате)
+  font         String?  // Шрифт текста
+  borderStyle  String?  // Стиль границ: 'top', 'bottom', 'left', 'right', 'all'
+
+  table Table @relation(fields: [tableId], references: [id])
+
+  @@unique([tableId, row, column]) // Уникальная комбинация для каждой ячейки
 }
 
 model CustomFormula {
