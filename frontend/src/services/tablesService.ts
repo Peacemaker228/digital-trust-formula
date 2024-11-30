@@ -27,3 +27,7 @@ export const updateTable = async (id: string, payload: UpdateTablePayload): Prom
   const response = await apiClient.patch<Table>(`/tables/${id}`, payload)
   return JSON.parse(JSON.stringify(response.data)) // Преобразуем в plain object
 }
+
+export const deleteTable = async (id: string): Promise<void> => {
+  await apiClient.delete(`/tables/${id}`)
+}

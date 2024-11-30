@@ -1,7 +1,7 @@
 'use client'
 
 import { CreateTablePayload, Table, UpdateTablePayload } from '@/helpers/types'
-import { createTable, fetchTableById, fetchTables, updateTable } from '@/services/tablesService'
+import { createTable, deleteTable, fetchTableById, fetchTables, updateTable } from '@/services/tablesService'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 // Хук для получения списка таблиц
@@ -42,6 +42,20 @@ export const useUpdateTable = () => {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['tables'] })
       queryClient.invalidateQueries({ queryKey: ['tables', id] })
+    },
+  })
+}
+
+export const useDeleteTable = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => deleteTable(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables'] })
+    },
+    onError: (error) => {
+      console.error('Failed to delete table:', error)
     },
   })
 }

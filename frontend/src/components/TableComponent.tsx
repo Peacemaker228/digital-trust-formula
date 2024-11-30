@@ -4,11 +4,15 @@ import { useEffect, useState } from 'react'
 
 import { useCreateOrUpdateCellStyle, useFetchCellStyles } from '@/hooks/api/useCellStyles'
 import { useCreateOrUpdateCell, useFetchCells } from '@/hooks/api/useCells'
+import { Menu } from 'lucide-react'
 import Image from 'next/image'
 import { utils, writeFile } from 'xlsx'
 
 import { transformCellsToRows } from '@/utils/transformCells'
+
 import FormulaDialog from './FormulaDialog'
+import TableDialog from './TableDialog'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from './ui/select'
 
 const TableComponent = ({ tableId }: { tableId: string }) => {
   const { data: cells, isLoading, error } = useFetchCells(tableId)
@@ -16,7 +20,7 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
   const createOrUpdateCell = useCreateOrUpdateCell()
   const createOrUpdateCellStyle = useCreateOrUpdateCellStyle()
 
-  const totalRows = 20
+  const totalRows = 16
   const totalColumns = Array.from(
     { length: 25 },
     (_, i) => String.fromCharCode(65 + i), // Генерация колонок A-Y
@@ -29,17 +33,17 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
   const [highlightedColumn, setHighlightedColumn] = useState<string | null>(null)
   const [editedCells, setEditedCells] = useState<Record<string, any>>({})
   const [liveStyles, setLiveStyles] = useState<Record<string, any>>({})
-  const [isFormulaDialogOpen, setIsFormulaDialogOpen] = useState(false);
+  const [isFormulaDialogOpen, setIsFormulaDialogOpen] = useState(false)
 
   // Функция открытия модального окна
   const handleCreateFormula = () => {
-    setIsFormulaDialogOpen(true);
-  };
+    setIsFormulaDialogOpen(true)
+  }
 
   // Функция закрытия модального окна
   const handleCloseFormulaDialog = () => {
-    setIsFormulaDialogOpen(false);
-  };
+    setIsFormulaDialogOpen(false)
+  }
 
   const [formatOptions, setFormatOptions] = useState({
     textColor: '#000000',
@@ -111,15 +115,15 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
   }
 
   const handleExportToExcel = () => {
-    const worksheetData = rows.map((row) =>
-      totalColumns.map((col) => row[col]?.value || '') // Исключаем номера строк и заголовки колонок
-    );
-  
-    const worksheet = utils.aoa_to_sheet(worksheetData);
-    const workbook = utils.book_new();
-    utils.book_append_sheet(workbook, worksheet, 'Table Data');
-    writeFile(workbook, `Table_${tableId}.xlsx`);
-  };
+    const worksheetData = rows.map(
+      (row) => totalColumns.map((col) => row[col]?.value || ''), // Исключаем номера строк и заголовки колонок
+    )
+
+    const worksheet = utils.aoa_to_sheet(worksheetData)
+    const workbook = utils.book_new()
+    utils.book_append_sheet(workbook, worksheet, 'Table Data')
+    writeFile(workbook, `Table_${tableId}.xlsx`)
+  }
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -151,10 +155,10 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
   return (
     <div className="relative max-w-screen overflow-hidden">
       {/* Панель форматирования */}
-      <div className="flex items-center gap-4 m-4 rounded-full bg-[#eae7f9] max-w-screen p-2">
-        <div className="flex flex-col items-center justify-center">
-          <label htmlFor="textColor" className="mr-2">
-            <Image src={'/icons/text.svg'} width={20} height={20} alt="Цвет текста" className="ml-2" />
+      <div className="flex items-center gap-1 m-4 rounded-full bg-[#eae7f9] max-w-screen px-2">
+        <div className="flex flex-col items-center justify-center p-2">
+          <label htmlFor="textColor" className="mr-2 cursor-pointer">
+            <Image src={'/icons/text.svg'} width={15} height={20} alt="Цвет текста" className="ml-2" />
           </label>
           <input
             type="color"
@@ -164,9 +168,9 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
             className="w-6 h-3 p-0 border-none"
           />
         </div>
-        <div className="flex flex-col items-center justify-center">
-          <label htmlFor="cellColor" className="mr-2">
-            <Image src='/icons/bg.svg' width={20} height={20} alt="Цвет фона" className="ml-2" />
+        <div className="flex flex-col items-center justify-center p-2">
+          <label htmlFor="cellColor" className="mr-2 cursor-pointer">
+            <Image src="/icons/bg.svg" width={18} height={20} alt="Цвет фона" className="ml-2" />
           </label>
           <input
             type="color"
@@ -180,24 +184,24 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
           <Image src={'/icons/download.svg'} width={25} height={25} alt="Скачать" />
         </button>
         <button onClick={handlePrint} className="hover:bg-[#f0f0f0] ml-2 mb-1 p-2 rounded-xl transition">
-          <Image src='/icons/print.svg' width={20} height={20} alt="Печать" />
+          <Image src="/icons/print.svg" width={20} height={20} alt="Печать" />
         </button>
         <button onClick={handleCreateFormula} className="hover:bg-[#f0f0f0] ml-2 mb-1 p-2 rounded-xl transition">
-        <Image src="/icons/formula.svg" width={25} height={25} alt="Создать формулу" />
-      </button>
+          <Image src="/icons/formula.svg" width={25} height={25} alt="Создать формулу" />
+        </button>
 
-      <FormulaDialog isOpen={isFormulaDialogOpen} onClose={handleCloseFormulaDialog} />
+        <FormulaDialog isOpen={isFormulaDialogOpen} onClose={handleCloseFormulaDialog} />
       </div>
 
-      <table className="max-w-screen border-collapse table-auto border border-gray-300 overflow-x-auto">
+      <table className="max-w-screen border-collapse border border-gray-300 overflow-auto">
         <thead>
           <tr className="border-b border-gray-300 bg-gray-200">
-            <th className="h-12 px-4 text-left font-medium text-muted-foreground sticky left-0 bg-gray-300" />
+            <th className="h-11 px-4 text-left font-medium text-muted-foreground sticky left-0 bg-gray-300" />
             {totalColumns.map((col) => (
               <th
                 key={col}
                 onClick={() => handleColumnClick(col)}
-                className={`h-12 px-4 text-center font-medium text-muted-foreground cursor-pointer border-r border-b border-[#f0f0f0] bg-[#f0f0f0] ${
+                className={`h-11 px-4 text-center font-medium text-muted-foreground cursor-pointer border-r border-b border-[#f0f0f0] bg-[#f0f0f0] ${
                   highlightedColumn === col ? 'bg-[#edebfb]' : ''
                 }`}>
                 {col}
@@ -215,7 +219,7 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
               }`}>
               <td
                 onClick={() => handleRowClick(row.rowNumber)}
-                className={`h-12 px-4 text-center sticky left-0 bg-gray-200 cursor-pointer ${
+                className={`h-11 px-4 text-center sticky left-0 bg-gray-200 cursor-pointer ${
                   highlightedRow === row.rowNumber ? 'bg-[#edebfb]' : ''
                 }`}>
                 {row.rowNumber}
@@ -224,7 +228,7 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
                 <td
                   key={col}
                   onClick={() => handleCellClick(row.rowNumber, col)}
-                  className={`h-12 px-4 text-left border-r border-gray-300 cursor-pointer ${
+                  className={`h-11 px-4 text-left border-r border-gray-300 cursor-pointer ${
                     selectedCell?.row === row.rowNumber && selectedCell?.column === col
                       ? 'bg-[#d6d1fa]'
                       : highlightedColumn === col

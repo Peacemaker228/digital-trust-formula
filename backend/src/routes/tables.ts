@@ -112,4 +112,38 @@ router.patch('/tables/:id', async (req: Request, res: Response): Promise<void> =
   }
 });
 
+/**
+ * @route DELETE /tables/:id
+ * @description Удаляет таблицу по ID.
+ * @param {Request} req - Запрос с параметрами:
+ *   @param {string} req.params.id - ID таблицы.
+ * @param {Response} res - Ответ сервера.
+ *   @returns {200} Если таблица успешно удалена.
+ *   @returns {404} Если таблица не найдена.
+ *   @returns {500} Если произошла ошибка при удалении таблицы.
+ * @returns {Promise<void>}
+ */
+router.delete('/tables/:id', async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+
+  try {
+    const table = await prisma.table.findUnique({
+      where: { id },
+    });
+
+    if (!table) {
+      res.status(404).json({ error: 'Table not found' });
+      return;
+    }
+
+    await prisma.table.delete({
+      where: { id },
+    });
+
+    res.status(200).json({ message: 'Table successfully deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete table' });
+  }
+});
+
 export default router;

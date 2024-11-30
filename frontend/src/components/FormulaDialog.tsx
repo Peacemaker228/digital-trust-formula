@@ -1,39 +1,48 @@
-'use client';
+'use client'
 
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useState } from 'react';
-import { useCreateFormula } from '@/hooks/api/useFormulas';
+import { useState } from 'react'
+
+import { useCreateFormula } from '@/hooks/api/useFormulas'
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 
 interface FormulaDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 const FormulaDialog: React.FC<FormulaDialogProps> = ({ isOpen, onClose }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [implementation, setImplementation] = useState('');
-  const createFormula = useCreateFormula();
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [implementation, setImplementation] = useState('')
+  const createFormula = useCreateFormula()
 
   const handleSave = () => {
     if (!name || !implementation) {
-      alert('Пожалуйста, заполните обязательные поля.');
-      return;
+      alert('Пожалуйста, заполните обязательные поля.')
+      return
     }
 
     createFormula.mutate(
       { name, description, implementation },
       {
         onSuccess: () => {
-          onClose(); // Закрыть модалку после успешного сохранения
+          onClose() // Закрыть модалку после успешного сохранения
         },
         onError: (error) => {
-          console.error(error);
-          alert('Ошибка при сохранении формулы.');
+          console.error(error)
+          alert('Ошибка при сохранении формулы.')
         },
-      }
-    );
-  };
+      },
+    )
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -65,23 +74,17 @@ const FormulaDialog: React.FC<FormulaDialogProps> = ({ isOpen, onClose }) => {
             className="w-full border border-gray-300 rounded-lg px-3 py-2"
           />
           <div className="flex justify-end gap-4">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
-            >
+            <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">
               Отмена
             </button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
-            >
+            <button onClick={handleSave} className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">
               Сохранить
             </button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
-export default FormulaDialog;
+export default FormulaDialog

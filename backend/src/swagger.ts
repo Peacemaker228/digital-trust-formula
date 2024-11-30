@@ -60,6 +60,63 @@ const swaggerDocument: OpenAPIV3.Document = {
         },
       },
     },
+    '/tables/{id}': {
+      delete: {
+        summary: 'Удалить таблицу по ID',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+            description: 'ID таблицы для удаления',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Таблица успешно удалена',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Таблица не найдена',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    error: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+          '500': {
+            description: 'Ошибка сервера',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    error: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/formulas': {
       get: {
         summary: 'Получить список кастомных формул',
