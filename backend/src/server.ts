@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3000;
 
 // Настройка CORS
 app.use(cors({
-  origin: ['http://localhost:3000'],
+  origin: ['http://localhost:4000'],
   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
