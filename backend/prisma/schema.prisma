@@ -1,0 +1,40 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Table {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cells     Cell[]
+}
+
+model Cell {
+  id        String   @id @default(uuid())
+  tableId   String
+  row       Int
+  column    String
+  value     String?
+  formula   String?
+  updatedAt DateTime @updatedAt
+
+  table Table @relation(fields: [tableId], references: [id])
+
+  @@unique([tableId, row, column]) // Составной уникальный ключ
+}
+
+model CustomFormula {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  implementation String // Код реализации формулы
+  createdAt   DateTime @default(now())
+}
