@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
+import { extractRangeFromFormula } from '@/helpers/extractRangeFromFormula'
+import { formulas } from '@/helpers/formulas'
 import { useCreateOrUpdateCellStyle, useFetchCellStyles } from '@/hooks/api/useCellStyles'
 import { useCreateOrUpdateCell, useFetchCells } from '@/hooks/api/useCells'
 import { Menu } from 'lucide-react'
@@ -31,7 +33,9 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
   const [selectedCell, setSelectedCell] = useState<{ row: number; column: string } | null>(null)
   const [highlightedRow, setHighlightedRow] = useState<number | null>(null)
   const [highlightedColumn, setHighlightedColumn] = useState<string | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editedCells, setEditedCells] = useState<Record<string, any>>({})
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [liveStyles, setLiveStyles] = useState<Record<string, any>>({})
   const [isFormulaDialogOpen, setIsFormulaDialogOpen] = useState(false)
 
@@ -108,9 +112,210 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
   }
 
   const handleCellChange = (row: number, column: string, value: string) => {
+    const formula = formulas.find((el) => value.startsWith(el.name))
+
+    const cellData = cells?.reduce(
+      (acc, curr) => {
+        return [...acc, { value: curr.value, cell: `${curr.column}${curr.row}` }]
+      },
+      [] as { value: string | null; cell: string }[],
+    )
+
+    let data
+
+    if (formula) {
+      switch (formula.name) {
+        case '=SUM':
+        case '=AVERAGE':
+        case '=MAX':
+        case '=MIN':
+        case '=COUNT':
+        case '=PRODUCT':
+        case '=VAR':
+          const cellRange = extractRangeFromFormula(value)
+          data = cellData?.filter((el) => cellRange.includes(el.cell)).map((el) => el.value)
+          break
+
+        case '=IF':
+          const matchIf = value.match(/=IF\(([^,]+),\s*"([^"]+)",\s*"([^"]+)"\)/)
+          if (matchIf) {
+            const condition = cellData?.find((el) => el.cell === matchIf[1])?.value
+            data = condition > 100 ? matchIf[2] : matchIf[3]
+          }
+          break
+
+        case '=CONCATENATE':
+          const matchConcatenate = value.match(/=CONCATENATE\(([^,]+),\s*"([^"]+)",\s*([^,]+)\)/)
+          if (matchConcatenate) {
+            const f1 = cellData?.find((el) => el.cell === matchConcatenate[1])?.value
+            const g1 = cellData?.find((el) => el.cell === matchConcatenate[3])?.value
+            data = `${f1} ${g1}`
+          }
+          break
+
+        case '=DATE':
+          const dateArgs = value
+            .match(/DATE\((\d+), (\d+), (\d+)\)/)
+            ?.slice(1)
+            .map(Number)
+
+          if (dateArgs) {
+            data = dateArgs
+          }
+          break
+
+        case '=TODAY':
+          data = new Date().toLocaleDateString()
+          break
+
+        case '=VLOOKUP':
+          const matchVlookup = value.match(/=VLOOKUP\(([^,]+),\s*([^,]+),\s*(\d+),\s*FALSE\)/)
+          if (matchVlookup) {
+            const lookupValue = cellData?.find((el) => el.cell === matchVlookup[1])?.value
+            const table = JSON.parse(matchVlookup[2]) // Предполагаем, что таблица передана в виде строки
+            const colIndex = parseInt(matchVlookup[3])
+            data = table.find((row) => row[0] === lookupValue)?.[colIndex - 1] || null
+          }
+          break
+
+        case '=SUBSTITUTE':
+          const matchSubstitute = value.match(/=SUBSTITUTE\(([^,]+),\s*"([^"]+)",\s*"([^"]+)"\)/)
+          if (matchSubstitute) {
+            const text = cellData?.find((el) => el.cell === matchSubstitute[1])?.value
+            const oldValue = matchSubstitute[2]
+            const newValue = matchSubstitute[3]
+            data = text.replace(new RegExp(oldValue, 'g'), newValue)
+          }
+          break
+
+        case '=TEXT':
+          const matchText = value.match(/=TEXT\(([^,]+),\s*"([^"]+)"\)/)
+          if (matchText) {
+            const val = cellData?.find((el) => el.cell === matchText[1])?.value
+            data = parseFloat(val).toFixed(2)
+          }
+          break
+
+        case '=TRIM':
+          const matchTrim = value.match(/=TRIM\(([^)]+)\)/)
+          if (matchTrim) {
+            const text = cellData?.find((el) => el.cell === matchTrim[1])?.value
+            data = text.trim()
+          }
+          break
+
+        case '=ROUND':
+          const matchRound = value.match(/=ROUND\(([^,]+),\s*(\d+)\)/)
+          if (matchRound) {
+            const num = parseFloat(cellData?.find((el) => el.cell === matchRound[1])?.value)
+            const decimals = parseInt(matchRound[2])
+            data = Number(num.toFixed(decimals))
+          }
+          break
+
+        case '=DAY':
+          const matchDay = value.match(/=DAY\(([^)]+)\)/)
+          if (matchDay) {
+            const date = new Date(cellData?.find((el) => el.cell === matchDay[1])?.value ?? '')
+            data = date.getDate()
+          }
+          break
+
+        case '=MONTH':
+          const matchMonth = value.match(/=MONTH\(([^)]+)\)/)
+          if (matchMonth) {
+            const date = new Date(cellData?.find((el) => el.cell === matchMonth[1])?.value ?? '')
+            data = date.getMonth() + 1
+          }
+          break
+
+        case '=YEAR':
+          const matchYear = value.match(/=YEAR\(([^)]+)\)/)
+          if (matchYear) {
+            const date = new Date(cellData?.find((el) => el.cell === matchYear[1])?.value ?? '')
+            data = date.getFullYear()
+          }
+          break
+
+        case '=LOOKUP':
+          const matchLookup = value.match(/=LOOKUP\(([^,]+),\s*([^,]+),\s*([^,]+)\)/)
+          if (matchLookup) {
+            const lookupValue = cellData?.find((el) => el.cell === matchLookup[1])?.value
+            const keys = JSON.parse(matchLookup[2])
+            const values = JSON.parse(matchLookup[3])
+            data = keys.indexOf(lookupValue) !== -1 ? values[keys.indexOf(lookupValue)] : null
+          }
+          break
+
+        case '=VALUE':
+          const matchValue = value.match(/=VALUE\(([^)]+)\)/)
+          if (matchValue) {
+            const text = cellData?.find((el) => el.cell === matchValue[1])?.value
+            data = parseFloat(text)
+          }
+          break
+
+        case '=COUNTBLANK':
+          const matchCountBlank = value.match(/=COUNTBLANK\(([^)]+)\)/)
+          if (matchCountBlank) {
+            const range = extractRangeFromFormula(value)
+            data = cellData?.filter((el) => range.includes(el.cell) && (el.value === null || el.value === '')).length
+          }
+          break
+
+        case '=ISNUMBER':
+          const matchIsNumber = value.match(/=ISNUMBER\(([^)]+)\)/)
+          if (matchIsNumber) {
+            const value = cellData?.find((el) => el.cell === matchIsNumber[1])?.value
+            data = typeof value === 'number'
+          }
+          break
+
+        case '=NOW':
+          data = new Date().toLocaleString()
+          break
+
+        case '=TEXTJOIN':
+          const matchTextJoin = value.match(/=TEXTJOIN\(([^,]+),\s*(TRUE|FALSE),\s*([^,]+)\)/)
+          if (matchTextJoin) {
+            const delimiter = matchTextJoin[1]
+            const values = JSON.parse(matchTextJoin[3]) // Предполагаем, что данные передаются в виде строки
+            data = values.join(delimiter)
+          }
+          break
+
+        case '=UNIQUE':
+          const matchUnique = value.match(/=UNIQUE\(([^)]+)\)/)
+          if (matchUnique) {
+            const dataArray = JSON.parse(matchUnique[1]) // Предполагаем, что данные передаются в виде строки
+            data = [...new Set(dataArray)]
+          }
+          break
+
+        case '=FILTER':
+          const matchFilter = value.match(/=FILTER\(([^,]+),\s*([^,]+)\)/)
+          if (matchFilter) {
+            const dataArray = JSON.parse(matchFilter[1]) // Предполагаем, что данные передаются в виде строки
+            const condition = matchFilter[2]
+            data = dataArray.filter((val) => eval(condition))
+          }
+          break
+
+        case '=SORT':
+          const matchSort = value.match(/=SORT\(([^)]+)\)/)
+          if (matchSort) {
+            const dataArray = JSON.parse(matchSort[1]) // Предполагаем, что данные передаются в виде строки
+            data = [...dataArray].sort()
+          }
+          break
+      }
+    }
+
+    const formulaValue = !formula ? value : formula.implementation(data)
+
     setEditedCells((prev) => ({
       ...prev,
-      [`${row}_${column}`]: { tableId, row, column, value },
+      [`${row}_${column}`]: { tableId, row, column, value: formulaValue },
     }))
   }
 
