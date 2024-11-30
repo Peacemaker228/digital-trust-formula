@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { utils, writeFile } from 'xlsx'
 
 import { transformCellsToRows } from '@/utils/transformCells'
+import FormulaDialog from './FormulaDialog'
 
 const TableComponent = ({ tableId }: { tableId: string }) => {
   const { data: cells, isLoading, error } = useFetchCells(tableId)
@@ -28,6 +29,17 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
   const [highlightedColumn, setHighlightedColumn] = useState<string | null>(null)
   const [editedCells, setEditedCells] = useState<Record<string, any>>({})
   const [liveStyles, setLiveStyles] = useState<Record<string, any>>({})
+  const [isFormulaDialogOpen, setIsFormulaDialogOpen] = useState(false);
+
+  // Функция открытия модального окна
+  const handleCreateFormula = () => {
+    setIsFormulaDialogOpen(true);
+  };
+
+  // Функция закрытия модального окна
+  const handleCloseFormulaDialog = () => {
+    setIsFormulaDialogOpen(false);
+  };
 
   const [formatOptions, setFormatOptions] = useState({
     textColor: '#000000',
@@ -170,6 +182,11 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
         <button onClick={handlePrint} className="hover:bg-[#f0f0f0] ml-2 mb-1 p-2 rounded-xl transition">
           <Image src='/icons/print.svg' width={20} height={20} alt="Печать" />
         </button>
+        <button onClick={handleCreateFormula} className="hover:bg-[#f0f0f0] ml-2 mb-1 p-2 rounded-xl transition">
+        <Image src="/icons/formula.svg" width={25} height={25} alt="Создать формулу" />
+      </button>
+
+      <FormulaDialog isOpen={isFormulaDialogOpen} onClose={handleCloseFormulaDialog} />
       </div>
 
       <table className="max-w-screen border-collapse table-auto border border-gray-300 overflow-x-auto">
