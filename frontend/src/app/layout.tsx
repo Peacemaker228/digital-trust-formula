@@ -25,10 +25,10 @@ export default function RootLayout({ children }: Readonly<PropsWithChildren>) {
   return (
     <html lang="en">
       <body className={cn(montserrat.variable, 'antialiased')}>
-        <ThemeProvider>
+        {/* <ThemeProvider> */}
           <Toaster />
           {children}
-        </ThemeProvider>
+        {/* </ThemeProvider> */}
       </body>
     </html>
   )
