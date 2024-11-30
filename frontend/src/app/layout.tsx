@@ -26,8 +26,8 @@ export default function RootLayout({ children }: Readonly<PropsWithChildren>) {
     <html lang="en">
       <body className={cn(montserrat.variable, 'antialiased')}>
         {/* <ThemeProvider> */}
-          <Toaster />
-          {children}
+        <Toaster />
+        {children}
         {/* </ThemeProvider> */}
       </body>
     </html>

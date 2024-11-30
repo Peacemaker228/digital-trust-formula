@@ -1,10 +1,10 @@
 'use client'
 
 import { useFetchCells } from '@/hooks/api/useCells'
-
-import { Header } from '@/components/header'
-import TableComponent from '@/components/TableComponent'
 import { useFetchTables } from '@/hooks/api/useTables'
+
+import TableComponent from '@/components/TableComponent'
+import { Header } from '@/components/header'
 
 export default function Home() {
   const { data } = useFetchTables()

@@ -1,30 +1,30 @@
-import { Cell } from "@/helpers/types";
+import { Cell } from '@/helpers/types'
 
 export const generateEmptyTable = (rows: number, columns: string[]) => {
-  const emptyTable: Record<string, any>[] = [];
+  const emptyTable: Record<string, any>[] = []
 
   for (let i = 1; i <= rows; i++) {
-    const row: Record<string, any> = { rowNumber: i };
+    const row: Record<string, any> = { rowNumber: i }
     columns.forEach((col) => {
-      row[col] = { value: '', formula: null }; // Пустая ячейка
-    });
-    emptyTable.push(row);
+      row[col] = { value: '', formula: null } // Пустая ячейка
+    })
+    emptyTable.push(row)
   }
 
-  return emptyTable;
-};
+  return emptyTable
+}
 
 export const transformCellsToRows = (
   cells: Cell[],
   totalRows: number,
-  totalColumns: string[]
+  totalColumns: string[],
 ): Record<string, any>[] => {
-  const baseTable = generateEmptyTable(totalRows, totalColumns);
+  const baseTable = generateEmptyTable(totalRows, totalColumns)
 
-  const rowMap: Record<number, Record<string, any>> = {};
+  const rowMap: Record<number, Record<string, any>> = {}
   baseTable.forEach((row) => {
-    rowMap[row.rowNumber] = row;
-  });
+    rowMap[row.rowNumber] = row
+  })
 
   cells.forEach((cell) => {
     if (rowMap[cell.row]) {
@@ -32,9 +32,9 @@ export const transformCellsToRows = (
         value: cell.value,
         formula: cell.formula,
         updatedAt: cell.updatedAt,
-      };
+      }
     }
-  });
+  })
 
-  return baseTable;
-};
+  return baseTable
+}

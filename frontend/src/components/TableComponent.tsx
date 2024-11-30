@@ -1,45 +1,48 @@
-'use client';
+'use client'
 
-import { useFetchCells } from '@/hooks/api/useCells';
-import { transformCellsToRows } from '@/utils/transformCells';
-import { useState } from 'react';
+import { useState } from 'react'
+
+import { useFetchCells } from '@/hooks/api/useCells'
+
+import { transformCellsToRows } from '@/utils/transformCells'
 
 const TableComponent = ({ tableId }: { tableId: string }) => {
-  const { data: cells, isLoading, error } = useFetchCells(tableId);
+  const { data: cells, isLoading, error } = useFetchCells(tableId)
 
   // Задаём размер таблицы
-  const totalRows = 20;
-  const totalColumns = Array.from({ length: 25 }, (_, i) =>
-    String.fromCharCode(65 + i) // Генерация колонок A-Y
-  );
+  const totalRows = 20
+  const totalColumns = Array.from(
+    { length: 25 },
+    (_, i) => String.fromCharCode(65 + i), // Генерация колонок A-Y
+  )
 
-  const rows = transformCellsToRows(cells || [], totalRows, totalColumns);
+  const rows = transformCellsToRows(cells || [], totalRows, totalColumns)
 
   // Состояния для выделения
-  const [selectedCell, setSelectedCell] = useState<{ row: number; column: string } | null>(null);
-  const [highlightedRow, setHighlightedRow] = useState<number | null>(null);
-  const [highlightedColumn, setHighlightedColumn] = useState<string | null>(null);
+  const [selectedCell, setSelectedCell] = useState<{ row: number; column: string } | null>(null)
+  const [highlightedRow, setHighlightedRow] = useState<number | null>(null)
+  const [highlightedColumn, setHighlightedColumn] = useState<string | null>(null)
 
-  if (isLoading) return <p>Загрузка...</p>;
-  if (error) return <p>Ошибка: {error.message}</p>;
+  if (isLoading) return <p>Загрузка...</p>
+  if (error) return <p>Ошибка: {error.message}</p>
 
   const handleCellClick = (row: number, column: string) => {
-    setSelectedCell({ row, column });
-    setHighlightedRow(null);
-    setHighlightedColumn(null);
-  };
+    setSelectedCell({ row, column })
+    setHighlightedRow(null)
+    setHighlightedColumn(null)
+  }
 
   const handleRowClick = (row: number) => {
-    setHighlightedRow(row);
-    setSelectedCell(null);
-    setHighlightedColumn(null);
-  };
+    setHighlightedRow(row)
+    setSelectedCell(null)
+    setHighlightedColumn(null)
+  }
 
   const handleColumnClick = (column: string) => {
-    setHighlightedColumn(column);
-    setSelectedCell(null);
-    setHighlightedRow(null);
-  };
+    setHighlightedColumn(column)
+    setSelectedCell(null)
+    setHighlightedRow(null)
+  }
 
   return (
     <div className="relative w-full overflow-x-auto">
@@ -54,8 +57,7 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
                 onClick={() => handleColumnClick(col)}
                 className={`h-12 px-4 text-center font-medium text-muted-foreground cursor-pointer border-r border-b border-[#f0f0f0] bg-[#f0f0f0] ${
                   highlightedColumn === col ? 'bg-[#edebfb]' : ''
-                }`}
-              >
+                }`}>
                 {col}
               </th>
             ))}
@@ -69,15 +71,13 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
               key={rowIndex}
               className={`hover:bg-[#edebfb] border-b border-gray-100 ${
                 highlightedRow === row.rowNumber ? 'bg-[#edebfb]' : ''
-              }`}
-            >
+              }`}>
               {/* Номер строки */}
               <td
                 onClick={() => handleRowClick(row.rowNumber)}
                 className={`h-12 px-4 text-center sticky left-0 cursor-pointer border-b border-r border-[#f0f0f0] bg-[#f0f0f0] ${
                   highlightedRow === row.rowNumber ? 'bg-[#edebfb]' : ''
-                }`}
-              >
+                }`}>
                 {row.rowNumber}
               </td>
               {/* Ячейки строки */}
@@ -89,10 +89,9 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
                     selectedCell?.row === row.rowNumber && selectedCell?.column === col
                       ? 'bg-[#edebfb]'
                       : highlightedColumn === col
-                      ? 'bg-[#edebfb]'
-                      : ''
-                  }`}
-                >
+                        ? 'bg-[#edebfb]'
+                        : ''
+                  }`}>
                   <input
                     type="text"
                     defaultValue={row[col]?.value || ''}
@@ -105,7 +104,7 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
         </tbody>
       </table>
     </div>
-  );
-};
+  )
+}
 
-export default TableComponent;
+export default TableComponent
