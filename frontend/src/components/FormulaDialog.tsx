@@ -1,28 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { FC, useState } from 'react'
 
-import { useCreateFormula } from '@/hooks/api/useFormulas'
+import { useCreateFormula, useFetchFormulas } from '@/hooks/api/useFormulas'
+import { ArrowUpFromLine } from 'lucide-react'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface FormulaDialogProps {
   isOpen: boolean
   onClose: () => void
 }
 
-const FormulaDialog: React.FC<FormulaDialogProps> = ({ isOpen, onClose }) => {
+const FormulaDialog: FC<FormulaDialogProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [implementation, setImplementation] = useState('')
   const createFormula = useCreateFormula()
+  const { data: formulas, isLoading: formulasLoading } = useFetchFormulas()
 
   const handleSave = () => {
     if (!name || !implementation) {
@@ -73,6 +68,25 @@ const FormulaDialog: React.FC<FormulaDialogProps> = ({ isOpen, onClose }) => {
             onChange={(e) => setImplementation(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2"
           />
+          <ul className="overflow-y-auto max-h-[250px] flex flex-col gap-2">
+            {formulasLoading ? (
+              <li>Загрузка...</li>
+            ) : (
+              formulas?.map((formula) => (
+                <li key={formula.id} className="">
+                  <p
+                    className="flex gap-2 items-center cursor-pointer hover:underline"
+                    onClick={() => {
+                      setImplementation((prev) => prev.concat(formula.name))
+                    }}>
+                    <ArrowUpFromLine className="w-4 h-4" />
+                    <strong>{formula.name}</strong>
+                  </p>
+                  <span>{formula.implementation}</span>
+                </li>
+              ))
+            )}
+          </ul>
           <div className="flex justify-end gap-4">
             <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">
               Отмена
