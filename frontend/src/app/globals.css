@@ -6,6 +6,10 @@ body {
   font-family: Montserrat, Arial, Helvetica, sans-serif;
 }
 
+input::selection {
+  background: transparent;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

@@ -42,6 +42,18 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
   const [position, setPosition] = useState({ x: 400, y: 500 }) // Позиция графика на экране
   const [showGraph, setShowGraph] = useState(false)
   const [chartData, setChartData] = useState<{ name: string; value: number }[]>([]) // Данные для графика
+  const calculateArithmetic = (value: string) => {
+    try {
+      // Проверяем, что строка содержит только допустимые символы для арифметических операций
+      if (/^[0-9+\-*/().\s]+$/.test(value)) {
+        return eval(value); // Вычисляем результат выражения
+      }
+      return value; // Если это не арифметическая операция, возвращаем исходное значение
+    } catch {
+      return value; // Если вычисление не удалось, возвращаем исходное значение
+    }
+  };
+  
 
   // Функция открытия модального окна
   const handleCreateFormula = () => {
@@ -134,14 +146,20 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
   }
 
   const handleCellChange = (row: number, column: string, value: string) => {
-    const formula = formulas.find((el) => value.startsWith(el.name))
+    let calculatedValue = value;
 
+  // Проверяем, является ли введенное значение арифметическим выражением
+  if (!formulas.some((formula) => value.startsWith(formula.name))) {
+    calculatedValue = calculateArithmetic(value); // Обрабатываем арифметические операции
+  } else {
+    // Если значение совпадает с формулой, выполняем текущую логику
+    const formula = formulas.find((el) => value.startsWith(el.name));
     const cellData = cells?.reduce(
       (acc, curr) => {
-        return [...acc, { value: curr.value, cell: `${curr.column}${curr.row}` }]
+        return [...acc, { value: curr.value, cell: `${curr.column}${curr.row}` }];
       },
       [] as { value: string | null; cell: string }[],
-    )
+    );
 
     let data
 
@@ -331,14 +349,16 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
           }
           break
       }
+      calculatedValue = formula.implementation(data);
     }
+  }
 
-    const formulaValue = !formula ? value : formula.implementation(data)
+    // const formulaValue = !formula ? value : formula.implementation(data)
 
     setEditedCells((prev) => ({
       ...prev,
-      [`${row}_${column}`]: { tableId, row, column, value: formulaValue },
-    }))
+      [`${row}_${column}`]: { tableId, row, column, value: calculatedValue },
+    }));
   }
 
   const handleExportToExcel = () => {
@@ -417,12 +437,12 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
           <Image src="/icons/formula.svg" width={25} height={25} alt="Создать формулу" />
         </button>
 
-        <ChartArea onClick={handleChartAreaClick} className="cursor-pointer" />
+        <ChartArea onClick={handleChartAreaClick} className="cursor-pointer mb-1 text-[#494949]" />
 
         <FormulaDialog isOpen={isFormulaDialogOpen} onClose={handleCloseFormulaDialog} />
       </div>
-      <div className="m-4">
-        <Input className="rounded-full" />
+      <div className="m-1">
+        <Input className=" h-8" placeholder="Введите значение" />
       </div>
 
       {showGraph && (
@@ -454,7 +474,7 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
               <th
                 key={col}
                 onClick={() => handleColumnClick(col)}
-                className={`h-11 px-4 text-center font-medium text-muted-foreground cursor-pointer border-r border-b border-[#f0f0f0] bg-[#f0f0f0] ${
+                className={`h-11 px-4 text-center font-medium text-muted-foreground cursor-pointer border-r border-b border-[#f0f0f0] bg-[#f0f0f0] select-none ${
                   highlightedColumn === col ? 'bg-[#edebfb]' : ''
                 }`}>
                 {col}
@@ -467,12 +487,12 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
           {rows.map((row) => (
             <tr
               key={row.rowNumber}
-              className={`hover:bg-[#edebfb] border-b border-gray-100 ${
+              className={`hover:bg-[#edebfb] border-b border-gray-100  ${
                 highlightedRow === row.rowNumber ? 'bg-[#edebfb]' : ''
               }`}>
               <td
                 onClick={() => handleRowClick(row.rowNumber)}
-                className={`h-11 px-4 text-center sticky left-0 bg-gray-200 cursor-pointer ${
+                className={`h-11 px-4 text-center sticky left-0 bg-gray-200 cursor-pointer select-none ${
                   highlightedRow === row.rowNumber ? 'bg-[#edebfb]' : ''
                 }`}>
                 {row.rowNumber}
@@ -493,7 +513,7 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
                     type="text"
                     defaultValue={row[col]?.value || ''}
                     onChange={(e) => handleCellChange(row.rowNumber, col, e.target.value)}
-                    className="w-full bg-transparent focus:outline-none"
+                    className="w-full bg-transparent focus:outline-none custom-input"
                   />
                 </td>
               ))}
@@ -504,5 +524,12 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
     </div>
   )
 }
+
+<style jsx>{`
+  .custom-input::selection {
+    background: black;
+    color: white;
+  }
+`}</style>
 
 export default TableComponent

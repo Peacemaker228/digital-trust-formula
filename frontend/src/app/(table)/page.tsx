@@ -75,6 +75,7 @@ export default function Home() {
 
   return (
     <div className="max-w-screen max-h-screen">
+      <Image src="/icons/logo.svg" width={30} height={30} alt="Логотип"  className='absolute top-24 left-2 z-50'/>
       <TableComponent tableId={selectedTableId || ''} />
       <div className="bg-[#eae7f9] w-full flex px-14 py-2 gap-2">
         <Select onValueChange={handleTableChange} defaultValue={selectedTableId || undefined}>
