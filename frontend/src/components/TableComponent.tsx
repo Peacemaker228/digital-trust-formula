@@ -6,15 +6,16 @@ import { extractRangeFromFormula } from '@/helpers/extractRangeFromFormula'
 import { formulas } from '@/helpers/formulas'
 import { useCreateOrUpdateCellStyle, useFetchCellStyles } from '@/hooks/api/useCellStyles'
 import { useCreateOrUpdateCell, useFetchCells } from '@/hooks/api/useCells'
-import { Menu } from 'lucide-react'
+import { ChartArea } from 'lucide-react'
 import Image from 'next/image'
+import { Bar, BarChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from 'recharts'
 import { utils, writeFile } from 'xlsx'
+
+import { Input } from '@/components/ui/input'
 
 import { transformCellsToRows } from '@/utils/transformCells'
 
 import FormulaDialog from './FormulaDialog'
-import TableDialog from './TableDialog'
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from './ui/select'
 
 const TableComponent = ({ tableId }: { tableId: string }) => {
   const { data: cells, isLoading, error } = useFetchCells(tableId)
@@ -38,6 +39,9 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [liveStyles, setLiveStyles] = useState<Record<string, any>>({})
   const [isFormulaDialogOpen, setIsFormulaDialogOpen] = useState(false)
+  const [position, setPosition] = useState({ x: 400, y: 500 }) // Позиция графика на экране
+  const [showGraph, setShowGraph] = useState(false)
+  const [chartData, setChartData] = useState<{ name: string; value: number }[]>([]) // Данные для графика
 
   // Функция открытия модального окна
   const handleCreateFormula = () => {
@@ -53,6 +57,24 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
     textColor: '#000000',
     cellColor: '#ffffff',
   })
+
+  const handleChartAreaClick = () => {
+    if (!selectedCell) return // Проверяем, что выделенная ячейка существует
+
+    // Извлекаем данные для графика из одной ячейки
+    const { row, column } = selectedCell
+    const cellValue = rows[row - 1]?.[column]?.value || 0
+
+    const data = [
+      {
+        name: `${row}-${column}`,
+        value: parseFloat(cellValue) || 0,
+      },
+    ]
+
+    setChartData(data)
+    setShowGraph(true)
+  }
 
   const handleCellClick = (row: number, column: string) => {
     setSelectedCell({ row, column })
@@ -395,8 +417,34 @@ const TableComponent = ({ tableId }: { tableId: string }) => {
           <Image src="/icons/formula.svg" width={25} height={25} alt="Создать формулу" />
         </button>
 
+        <ChartArea onClick={handleChartAreaClick} className="cursor-pointer" />
+
         <FormulaDialog isOpen={isFormulaDialogOpen} onClose={handleCloseFormulaDialog} />
       </div>
+      <div className="m-4">
+        <Input className="rounded-full" />
+      </div>
+
+      {showGraph && (
+        <div
+          style={{
+            position: 'absolute',
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+            cursor: 'move',
+            zIndex: 100,
+            backgroundColor: 'white',
+          }}>
+          <BarChart width={730} height={250} data={chartData} style={{ pointerEvents: 'none' }}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="value" fill="#8884d8" />
+          </BarChart>
+        </div>
+      )}
 
       <table className="max-w-screen border-collapse border border-gray-300 overflow-auto">
         <thead>

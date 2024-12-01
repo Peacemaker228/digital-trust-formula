@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 
-import { useDeleteTable, useFetchTables, useUpdateTable } from '@/hooks/api/useTables'
-import { toast, useToast } from '@/hooks/use-toast'
+import { useDeleteTable, useFetchTables } from '@/hooks/api/useTables'
+import { useToast } from '@/hooks/use-toast'
 import { Pen, Trash } from 'lucide-react'
 import Image from 'next/image'
 
@@ -11,13 +11,12 @@ import EditTableDialog from '@/components/EditTableDialog'
 import TableComponent from '@/components/TableComponent'
 import TableDialog from '@/components/TableDialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ToastAction } from '@/components/ui/toast'
 
 export default function Home() {
   const { toast } = useToast()
 
   const { data: tables, isLoading, error } = useFetchTables()
-  const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
+  const [selectedTableId, setSelectedTableId] = useState<string | null>('b84f62a5-557c-4189-8fec-b7647f6f7a0f')
   const [isTableDialogOpen, setIsTableDialogOpen] = useState(false)
   const [isEditTableDialogOpen, setIsEditTableDialogOpen] = useState(false)
 
@@ -25,19 +24,21 @@ export default function Home() {
   const handleTableChange = (tableId: string) => setSelectedTableId(tableId)
 
   // Открыть модалку добавления таблицы
-  const handleOpenTableDialog = () => { if (selectedTableId === null) {
-    toast({
-      title: 'Таблица не выбрана',
-      variant: 'destructive',
-    })
-    return
+  const handleOpenTableDialog = () => {
+    if (selectedTableId === null) {
+      toast({
+        title: 'Таблица не выбрана',
+        variant: 'destructive',
+      })
+      return
+    }
+    setIsTableDialogOpen(true)
   }
-  setIsTableDialogOpen(true)}
   const handleCloseTableDialog = () => setIsTableDialogOpen(false)
 
   // Открыть модалку редактирования таблицы
   const handleOpenEditTableDialog = () => setIsEditTableDialogOpen(true)
-  
+
   const handleCloseEditTableDialog = () => setIsEditTableDialogOpen(false)
 
   // Удаление таблицы
